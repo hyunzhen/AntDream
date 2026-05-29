@@ -1033,7 +1033,6 @@ function renderEvening() {
   ri.textContent = `${rpct >= 0 ? '+' : ''}${rpct}%`;
   ri.className = `sum-val ${rpct >= 0 ? 'up' : 'down'}`;
   $('e-cash').textContent = fmt(g.cash);
-  $('e-bar-asset').textContent = fmt(total());
 
   let pool;
   if (rpct >= 20) pool = MSGS.big;
