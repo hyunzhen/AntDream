@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>개미의 꿈 🐜</title>
+<style>
+:root{
+  --bg:#f8f9fa;--card:#fff;--border:#e2e8f0;
+  --text:#1e2130;--sub:#6b7280;
+  --up:#e53e3e;--down:#3182ce;--flat:#a0aec0;
+  --accent:#f6c90e;--colony:#7c5cbf;--green:#38a169;
+  --r:12px;--sh:0 2px 8px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;
+  background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+
+/* 화면 */
+.screen{display:none;flex-direction:column;min-height:100vh;
+  max-width:480px;margin:0 auto;padding-bottom:76px}
+.screen.active{display:flex}
+
+/* 상단바 */
+.top-bar{position:sticky;top:0;z-index:10;background:var(--card);
+  border-bottom:1px solid var(--border);padding:10px 16px;
+  display:flex;align-items:center;gap:8px}
+.day-lbl{font-size:18px;font-weight:800;color:var(--colony)}
+.colony-chip{background:#f3f0ff;color:var(--colony);
+  font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px}
+.asset-chip{margin-left:auto;background:#fffbeb;color:#92400e;
+  font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px}
+.help-btn{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);
+  background:var(--bg);color:var(--sub);font-size:13px;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-left:6px;transition:all .12s}
+.help-btn:active{background:var(--colony);color:#fff;border-color:var(--colony)}
+
+/* 식량 설명 태그 */
+.food-tag{font-size:10px;padding:2px 7px;border-radius:10px;
+  background:#f3f4f6;color:var(--sub);font-weight:600;white-space:nowrap}
+.food-tag.danger{background:#fed7d7;color:#9b2c2c}
+.food-tag.safe{background:#c6f6d5;color:#276749}
+.food-tag.special{background:#fefcbf;color:#744210}
+
+/* 소문 영향 식량 강조 */
+.food-row.hot{background:#fffef5;border-left:3px solid #f59e0b;padding-left:11px}
+.rumor-dot{width:7px;height:7px;border-radius:50%;background:#f59e0b;
+  display:inline-block;flex-shrink:0;align-self:center;margin-left:2px}
+
+/* 인라인 구입 컨트롤 (아코디언) */
+.food-buy-inline{padding:10px 14px 12px;background:#f5f3ff;
+  border-bottom:1px solid var(--border)}
+.fbi-controls{display:flex;gap:7px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.fbi-cost{font-size:12px;color:var(--sub);margin-bottom:8px}
+
+/* DAY 1 시작 메시지 */
+.welcome-msg{margin:10px 16px 0;background:#f5f3ff;border:1.5px solid #a78bfa;
+  border-radius:10px;padding:11px 14px;font-size:13px;color:var(--colony);line-height:1.6}
+
+/* 소문 접기/펼치기 */
+.rum-toggle{float:right;font-size:10px;font-weight:700;color:var(--sub);
+  background:none;border:none;cursor:pointer;padding:0}
+
+/* 섹션 카드 */
+.sec{margin:10px 16px 0;background:var(--card);border-radius:var(--r);
+  box-shadow:var(--sh);overflow:hidden}
+.sec-hd{padding:9px 14px 7px;font-size:11px;font-weight:800;
+  letter-spacing:1px;text-transform:uppercase;color:var(--sub);
+  border-bottom:1px solid var(--border)}
+
+/* 소문 아이템 */
+.rumor-row{padding:10px 14px;border-bottom:1px solid var(--border);
+  display:flex;gap:8px;align-items:flex-start}
+.rumor-row:last-child{border-bottom:none}
+.rumor-txt{flex:1;font-size:13px;line-height:1.5}
+.rumor-hint{font-size:12px;color:var(--accent);flex-shrink:0}
+.rumor-bdg{font-size:10px;padding:2px 7px;border-radius:10px;
+  flex-shrink:0;align-self:center;font-weight:700}
+.bdg-pos{background:#c6f6d5;color:#276749}
+.bdg-neg{background:#fed7d7;color:#9b2c2c}
+.bdg-mix{background:#fefcbf;color:#744210}
+.bdg-rum{background:#feebc8;color:#7b341e}
+.bdg-blind{background:#e2e8f0;color:#4a5568}
+
+/* 가격 변동 리스트 */
+.chg-row{padding:9px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px}
+.chg-row:last-child{border-bottom:none}
+.chg-em{font-size:22px;flex-shrink:0}
+.chg-nm{font-size:13px;font-weight:600;flex:1}
+.chg-pr{font-size:11px;color:var(--sub)}
+.chg-pct{font-size:14px;font-weight:800;min-width:54px;text-align:right}
+.up{color:var(--up)}.down{color:var(--down)}.flat{color:var(--flat)}
+
+/* 포트폴리오 행 (아침 매도) */
+.port-row{padding:10px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .12s}
+.port-row:last-child{border-bottom:none}
+.port-row.sel,.port-row:active{background:#f3f0ff}
+.port-val{margin-left:auto;font-size:12px;font-weight:600;color:var(--colony)}
+
+/* 식량 행 (낮 매수) */
+.food-row{padding:10px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .12s}
+.food-row:last-child{border-bottom:none}
+.food-row.sel,.food-row:active{background:#f3f0ff}
+.food-em{font-size:22px;width:30px;text-align:center;flex-shrink:0}
+.food-nm{font-size:13px;font-weight:600}
+.food-own{font-size:11px;color:var(--sub)}
+.food-pr{font-size:13px;font-weight:700}
+.food-chg{font-size:11px;font-weight:600}
+
+/* 거래 패널 */
+.trade-panel{margin:10px 16px 0;background:var(--card);
+  border-radius:var(--r);box-shadow:var(--sh);padding:14px}
+.tp-name{font-size:16px;font-weight:800;margin-bottom:3px}
+.tp-sub{font-size:12px;color:var(--sub);margin-bottom:12px}
+.qty-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.btn-sm{padding:5px 11px;border:1.5px solid var(--border);border-radius:6px;
+  font-size:12px;font-weight:600;background:var(--bg);color:var(--text);
+  cursor:pointer;transition:all .12s}
+.btn-sm:active{background:#f3f0ff;border-color:var(--colony)}
+.qty-num{font-size:18px;font-weight:800;color:var(--colony);
+  min-width:32px;text-align:center}
+.btn-cir{width:30px;height:30px;border-radius:50%;
+  border:1.5px solid var(--colony);background:var(--bg);color:var(--colony);
+  font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .12s}
+.btn-cir:active{background:var(--colony);color:#fff}
+.tp-cost{font-size:12px;color:var(--sub);margin-bottom:10px}
+.btn-trade{width:100%;padding:13px;border:none;border-radius:8px;
+  font-size:15px;font-weight:700;cursor:pointer;transition:.12s}
+.btn-sell-c{background:var(--down);color:#fff}
+.btn-buy-c{background:var(--up);color:#fff}
+.btn-trade:active{opacity:.85}
+.btn-trade:disabled{background:var(--border);color:var(--sub);cursor:not-allowed}
+
+/* 굴 진행바 */
+.colony-bar{margin:10px 16px 0}
+.stage-chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.chip-done{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;
+  background:var(--colony);color:#fff}
+.chip-next{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;
+  background:#f3f0ff;color:var(--colony);border:1px dashed var(--colony)}
+.chip-lock{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;
+  background:var(--border);color:var(--sub)}
+.prog-wrap{background:var(--border);border-radius:4px;height:8px;overflow:hidden}
+.prog-fill{height:100%;background:var(--colony);border-radius:4px;transition:width .5s}
+.prog-lbl{font-size:11px;color:var(--sub);margin-top:4px}
+
+/* 하단 고정바 */
+.bot-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;background:var(--card);
+  border-top:1px solid var(--border);padding:10px 16px;
+  display:flex;align-items:center;gap:10px;z-index:10}
+.cash-lbl{font-size:13px;color:var(--sub)}
+.cash-amt{font-size:14px;font-weight:700;color:var(--colony)}
+.btn-main{margin-left:auto;padding:11px 20px;background:var(--colony);
+  color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;
+  cursor:pointer;white-space:nowrap}
+.btn-main:active{opacity:.85}
+.btn-full{width:100%;padding:14px;background:var(--colony);color:#fff;
+  border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer}
+.btn-full:active{opacity:.85}
+
+/* 배당 공지 */
+.dividend-box{margin:10px 16px 0;background:#fffbeb;
+  border:1.5px solid #fbbf24;border-radius:var(--r);
+  padding:10px 14px;font-size:13px;font-weight:600;color:#92400e}
+
+/* 요약 카드 */
+.summary{padding:14px}
+.sum-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.sum-lbl{font-size:12px;color:var(--sub)}
+.sum-val{font-size:14px;font-weight:700}
+.ant-msg{margin-top:10px;padding:10px 12px;background:var(--bg);
+  border-radius:8px;font-size:13px;line-height:1.6;
+  border-left:3px solid var(--colony)}
+
+/* 타이틀 */
+.title-wrap{flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:40px 24px;text-align:center}
+.t-ant{font-size:72px;margin-bottom:12px}
+.t-name{font-size:28px;font-weight:900;color:var(--colony);margin-bottom:8px}
+.t-sub{font-size:14px;color:var(--sub);line-height:1.7;margin-bottom:20px}
+.t-tip{font-size:12px;color:var(--flat);margin-top:12px}
+
+/* 엔딩 */
+.end-wrap{flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:32px 24px;text-align:center}
+.end-icon{font-size:64px;margin-bottom:12px}
+.end-title{font-size:24px;font-weight:900;color:var(--colony);margin-bottom:8px}
+.end-sub{font-size:14px;color:var(--sub);line-height:1.8;white-space:pre-line;margin-bottom:24px}
+
+/* 공유 팝업 */
+.popup-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);
+  display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+.popup-box{background:var(--card);border-radius:var(--r);
+  padding:20px;width:100%;max-width:360px}
+.share-pre{font-family:monospace;font-size:13px;line-height:1.7;
+  background:var(--bg);border-radius:8px;padding:12px;
+  margin-bottom:12px;white-space:pre-wrap;word-break:break-word}
+.btn-copy{width:100%;padding:12px;background:var(--colony);color:#fff;
+  border:none;border-radius:8px;font-size:14px;font-weight:700;
+  cursor:pointer;margin-bottom:8px}
+.btn-close-p{width:100%;padding:11px;background:var(--bg);color:var(--text);
+  border:1.5px solid var(--border);border-radius:8px;
+  font-size:14px;font-weight:600;cursor:pointer}
+
+/* 토스트 */
+.toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%);
+  background:#1e2130;color:#fff;padding:8px 18px;border-radius:20px;
+  font-size:13px;font-weight:600;opacity:0;transition:opacity .2s;
+  pointer-events:none;z-index:200;white-space:nowrap}
+.toast.show{opacity:1}
+
+.empty-msg{padding:16px 14px;font-size:13px;color:var(--sub);text-align:center}
+.spacer{height:12px}
+
+/* 일과 진행 표시 */
+.day-prog{display:flex;align-items:flex-start;padding:10px 24px;background:var(--card);
+  border-bottom:1px solid var(--border);position:sticky;top:48px;z-index:9}
+.dp-step{display:flex;flex-direction:column;align-items:center;gap:3px;flex:0 0 auto}
+.dp-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:15px}
+.dp-dot.active{background:var(--colony);box-shadow:0 0 0 3px #e9d5ff}
+.dp-dot.done{background:#ddd6fe}
+.dp-dot.idle{background:var(--border);filter:grayscale(1);opacity:.5}
+.dp-lbl{font-size:10px;font-weight:700;letter-spacing:.3px}
+.dp-lbl.active{color:var(--colony)}
+.dp-lbl.done{color:#7c3aed}
+.dp-lbl.idle{color:var(--flat)}
+.dp-line{flex:1;height:2px;margin:0 4px;margin-top:14px;border-radius:2px}
+.dp-line.done{background:#ddd6fe}
+.dp-line.idle{background:var(--border)}
+
+/* 인라인 매도 식량 카드 */
+.pfi{border-bottom:1px solid var(--border)}
+.pfi:last-child{border-bottom:none}
+.pfi-top{display:flex;align-items:center;gap:10px;padding:11px 14px 7px}
+.pfi-val{text-align:right;flex-shrink:0}
+.pfi-val-main{font-size:13px;font-weight:700;color:var(--colony)}
+.pfi-val-sub{font-size:11px;color:var(--sub);margin-top:1px}
+.pfi-btns{padding:0 14px 11px;display:flex;gap:7px}
+.btn-sell-one{padding:7px 14px;border:1.5px solid var(--down);color:var(--down);
+  background:#fff;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;
+  white-space:nowrap;transition:all .12s}
+.btn-sell-one:active{background:var(--down);color:#fff}
+.btn-sell-all{flex:1;padding:7px 0;background:var(--down);color:#fff;
+  border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;
+  transition:opacity .12s}
+.btn-sell-all:active{opacity:.8}
+</style>
+</head>
+<body>
+
+<!-- 타이틀 -->
+<div id="scr-title" class="screen active">
+  <div class="title-wrap">
+    <div class="t-ant">🐜</div>
+    <div class="t-name">개미의 꿈</div>
+    <p class="t-sub">일개미의 달콤한 투자 생존기<br>소문을 듣고, 식량을 모아, 내 굴을 지어봐!</p>
+    <button class="btn-full" style="max-width:280px" onclick="goIntro()">게임 시작</button>
+    <p class="t-tip">☀️ 아침엔 팔고 &nbsp;|&nbsp; 🌤️ 낮엔 사고 &nbsp;|&nbsp; 🌙 저녁엔 잠자기</p>
+  </div>
+</div>
+
+<!-- 게임 소개 -->
+<div id="scr-intro" class="screen">
+  <div style="background:var(--card);border-bottom:1px solid var(--border);padding:14px 16px;font-size:16px;font-weight:800;color:var(--colony);position:sticky;top:0;z-index:10">
+    🐜 게임 소개
+  </div>
+
+  <!-- ⚠️ 저장 안내 -->
+  <div style="margin:14px 16px 0;background:#fffbeb;border:1.5px solid #f59e0b;border-radius:12px;padding:13px 16px">
+    <div style="font-size:12px;font-weight:800;color:#92400e;margin-bottom:5px;letter-spacing:.5px">⚠️ 프로토타입 안내</div>
+    <div style="font-size:13px;color:#78350f;line-height:1.65">현재 버전은 <strong>저장 기능이 없어요.</strong><br>새로고침하거나 창을 닫으면 진행 상황이 모두 초기화됩니다.</div>
+  </div>
+
+  <!-- 하루의 흐름 -->
+  <div class="sec">
+    <div class="sec-hd">하루의 흐름</div>
+    <div style="padding:4px 0">
+      <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--border)">
+        <span style="font-size:22px;width:28px;text-align:center">☀️</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">아침</div>
+          <div style="font-size:12px;color:var(--sub);margin-top:2px">소문 확인 · 어젯밤 가격 변동 공개</div>
+        </div>
+        <span style="font-size:12px;font-weight:700;background:#fed7d7;color:#9b2c2c;padding:3px 9px;border-radius:20px">판매</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--border)">
+        <span style="font-size:22px;width:28px;text-align:center">🌤️</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">낮</div>
+          <div style="font-size:12px;color:var(--sub);margin-top:2px">소문 보고 투자 결정</div>
+        </div>
+        <span style="font-size:12px;font-weight:700;background:#c6f6d5;color:#276749;padding:3px 9px;border-radius:20px">구입</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:11px 14px">
+        <span style="font-size:22px;width:28px;text-align:center">🌙</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">저녁</div>
+          <div style="font-size:12px;color:var(--sub);margin-top:2px">오늘 결과 확인 · 잠자기</div>
+        </div>
+        <span style="font-size:12px;font-weight:700;background:#f3f0ff;color:var(--colony);padding:3px 9px;border-radius:20px">잠자기</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 소문 힌트 -->
+  <div class="sec">
+    <div class="sec-hd">소문 힌트 읽는 법</div>
+    <div style="padding:4px 0">
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border)">
+        <span style="font-size:14px;color:var(--accent);width:52px;flex-shrink:0">★★★</span>
+        <div style="font-size:13px;color:var(--text)">거의 확실해요 — 믿고 투자해도 좋아요</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border)">
+        <span style="font-size:14px;color:var(--accent);width:52px;flex-shrink:0">★★☆</span>
+        <div style="font-size:13px;color:var(--text)">루머일 수도 있어요 ⚠️ 조심하세요</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border)">
+        <span style="font-size:14px;color:var(--accent);width:52px;flex-shrink:0">★☆☆</span>
+        <div style="font-size:13px;color:var(--text)">반반이에요 — 불확실한 정보예요</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 14px">
+        <span style="font-size:14px;color:var(--flat);width:52px;flex-shrink:0">없음</span>
+        <div style="font-size:13px;color:var(--text)">오늘은 조용한 날이에요 — 감으로...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 식량 6종 -->
+  <div class="sec">
+    <div class="sec-hd">식량 6종</div>
+    <div style="padding:4px 0">
+      <div style="display:grid;grid-template-columns:1fr 1fr">
+        <div style="padding:10px 14px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);display:flex;gap:8px;align-items:center">
+          <span style="font-size:20px">🍬</span>
+          <div><div style="font-size:13px;font-weight:600">사탕</div><div style="font-size:11px;color:var(--sub)">변동 보통</div></div>
+        </div>
+        <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center">
+          <span style="font-size:20px">🍫</span>
+          <div><div style="font-size:13px;font-weight:600">초콜릿</div><div style="font-size:11px;color:var(--sub)">고위험 고수익</div></div>
+        </div>
+        <div style="padding:10px 14px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);display:flex;gap:8px;align-items:center">
+          <span style="font-size:20px">🍚</span>
+          <div><div style="font-size:13px;font-weight:600">설탕</div><div style="font-size:11px;color:var(--sub)">안전하지만 느림</div></div>
+        </div>
+        <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center">
+          <span style="font-size:20px">🍯</span>
+          <div><div style="font-size:13px;font-weight:600">꿀</div><div style="font-size:11px;color:#92400e;font-weight:600">매일 배당금 💰</div></div>
+        </div>
+        <div style="padding:10px 14px;border-right:1px solid var(--border);display:flex;gap:8px;align-items:center">
+          <span style="font-size:20px">🎂</span>
+          <div><div style="font-size:13px;font-weight:600">케이크</div><div style="font-size:11px;color:var(--sub)">파티 때 대박</div></div>
+        </div>
+        <div style="padding:10px 14px;display:flex;gap:8px;align-items:center">
+          <span style="font-size:20px">🍡</span>
+          <div><div style="font-size:13px;font-weight:600">젤리</div><div style="font-size:11px;color:var(--sub)">유행 타면 폭등</div></div>
+        </div>
+      </div>
+      <div style="padding:10px 14px;background:var(--bg);font-size:12px;color:#92400e;line-height:1.6;border-top:1px solid var(--border)">
+        💡 <strong>꿀</strong>을 보유하면 매일 아침 개당 100원씩 자동으로 들어와요. 하락장에서 버티는 힘이 됩니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- 굴 목표 -->
+  <div class="sec">
+    <div class="sec-hd">목표 — 굴을 완성하세요!</div>
+    <div style="padding:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-bottom:10px">
+        <span style="font-size:11px;text-align:center;color:var(--sub)">🏠<br>혼자방</span>
+        <span style="color:var(--flat);font-size:12px">→</span>
+        <span style="font-size:11px;text-align:center;color:var(--sub)">📦<br>식량창고</span>
+        <span style="color:var(--flat);font-size:12px">→</span>
+        <span style="font-size:11px;text-align:center;color:var(--sub)">🍚<br>설탕저장소</span>
+        <span style="color:var(--flat);font-size:12px">→</span>
+        <span style="font-size:11px;text-align:center;color:var(--sub)">🍫<br>초콜릿금고</span>
+        <span style="color:var(--flat);font-size:12px">→</span>
+        <span style="font-size:11px;text-align:center;color:var(--sub)">🍯<br>꿀단지도서관</span>
+        <span style="color:var(--flat);font-size:12px">→</span>
+        <span style="font-size:11px;text-align:center;color:var(--colony);font-weight:700">🏰<br>여왕없는왕국</span>
+      </div>
+      <div style="font-size:12px;color:var(--sub);line-height:1.6">자산이 쌓일수록 굴이 단계별로 넓어집니다. 최종 목표는 시작 자산의 <strong>10배</strong>!</div>
+    </div>
+  </div>
+
+  <div style="padding:16px 16px 4px">
+    <button class="btn-full" onclick="startNewGame()">게임 시작 →</button>
+  </div>
+  <div style="padding:0 16px 16px;text-align:center">
+    <button style="background:none;border:none;color:var(--sub);font-size:13px;cursor:pointer;padding:8px" onclick="show('scr-title')">← 처음으로</button>
+  </div>
+</div>
+
+<!-- 아침 -->
+<div id="scr-morning" class="screen">
+  <div class="top-bar">
+    <span class="day-lbl" id="m-day">🐜 DAY 1</span>
+    <span class="colony-chip" id="m-col">🏠 혼자방</span>
+    <span class="asset-chip" id="m-asset">₩27,000</span>
+    <button class="help-btn" onclick="openHelp()" title="게임 설명">?</button>
+  </div>
+  <!-- 일과 진행 -->
+  <div class="day-prog">
+    <div class="dp-step">
+      <div class="dp-dot active">☀️</div>
+      <div class="dp-lbl active">아침</div>
+    </div>
+    <div class="dp-line idle"></div>
+    <div class="dp-step">
+      <div class="dp-dot idle">🌤️</div>
+      <div class="dp-lbl idle">낮</div>
+    </div>
+    <div class="dp-line idle"></div>
+    <div class="dp-step">
+      <div class="dp-dot idle">🌙</div>
+      <div class="dp-lbl idle">저녁</div>
+    </div>
+  </div>
+
+  <div id="m-welcome" class="welcome-msg" style="display:none">
+    🐜 "오늘부터 시작이야. 소문을 잘 들어보자!"<br>
+    <span style="font-size:12px;color:#7c3aed;opacity:.8">꿀 🍯을 보유하면 매일 아침 배당금이 들어와요.</span>
+  </div>
+  <div id="m-div" style="display:none" class="dividend-box"></div>
+  <div class="sec">
+    <div class="sec-hd">📣 오늘의 소문</div>
+    <div id="m-rum-list"></div>
+  </div>
+  <div class="sec">
+    <div class="sec-hd">🧺 보유 식량 — 지금 바로 판매 가능</div>
+    <div id="m-port-list"></div>
+  </div>
+  <div style="height:76px"></div>
+
+  <!-- 하단 고정바 -->
+  <div class="bot-bar">
+    <span class="cash-lbl">💰 현금</span>
+    <span class="cash-amt" id="m-cash">₩15,000</span>
+    <button class="btn-main" onclick="goNoon()">구입하러 가기 →</button>
+  </div>
+</div>
+
+<!-- 낮 -->
+<div id="scr-noon" class="screen">
+  <div class="top-bar">
+    <span class="day-lbl" id="n-day">🌤️ DAY 1</span>
+    <span class="colony-chip" id="n-col">🏠 혼자방</span>
+    <span class="asset-chip" id="n-asset">₩27,000</span>
+    <button class="help-btn" onclick="openHelp()" title="게임 설명">?</button>
+  </div>
+  <!-- 일과 진행 -->
+  <div class="day-prog">
+    <div class="dp-step">
+      <div class="dp-dot done">☀️</div>
+      <div class="dp-lbl done">아침</div>
+    </div>
+    <div class="dp-line done"></div>
+    <div class="dp-step">
+      <div class="dp-dot active">🌤️</div>
+      <div class="dp-lbl active">낮</div>
+    </div>
+    <div class="dp-line idle"></div>
+    <div class="dp-step">
+      <div class="dp-dot idle">🌙</div>
+      <div class="dp-lbl idle">저녁</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd" style="cursor:pointer;user-select:none" onclick="toggleNoonRumors()">
+      📣 오늘의 소문
+      <button class="rum-toggle" id="n-rum-toggle">더 보기 ▼</button>
+    </div>
+    <div id="n-rum-list"></div>
+  </div>
+  <div class="sec">
+    <div class="sec-hd">🏪 식량 거래소 — 탭해서 구입</div>
+    <div id="n-food-list"></div>
+  </div>
+  <div style="height:76px"></div>
+  <div class="bot-bar">
+    <span class="cash-lbl">💰 현금</span>
+    <span class="cash-amt" id="n-cash">₩15,000</span>
+    <button class="btn-main" onclick="goEvening()">하루 마치기 →</button>
+  </div>
+</div>
+
+<!-- 저녁 -->
+<div id="scr-evening" class="screen">
+  <div class="top-bar">
+    <span class="day-lbl" id="e-day">🌙 DAY 1</span>
+    <span class="colony-chip" id="e-col">🏠 혼자방</span>
+    <span class="asset-chip" id="e-top-asset">₩27,000</span>
+    <button class="help-btn" onclick="openHelp()" title="게임 설명">?</button>
+  </div>
+  <!-- 일과 진행 -->
+  <div class="day-prog">
+    <div class="dp-step">
+      <div class="dp-dot done">☀️</div>
+      <div class="dp-lbl done">아침</div>
+    </div>
+    <div class="dp-line done"></div>
+    <div class="dp-step">
+      <div class="dp-dot done">🌤️</div>
+      <div class="dp-lbl done">낮</div>
+    </div>
+    <div class="dp-line done"></div>
+    <div class="dp-step">
+      <div class="dp-dot active">🌙</div>
+      <div class="dp-lbl active">저녁</div>
+    </div>
+  </div>
+
+  <!-- 오늘 가격 변동 (저녁에 공개) -->
+  <div id="e-chg-sec" class="sec" style="margin-top:12px;display:none">
+    <div class="sec-hd">📊 오늘 가격 변동</div>
+    <div id="e-chg-list"></div>
+  </div>
+
+  <div class="sec" style="margin-top:10px">
+    <div class="sec-hd">💼 오늘 결산</div>
+    <div class="summary">
+      <div class="sum-row"><span class="sum-lbl">총 자산</span><span class="sum-val" id="e-total"></span></div>
+      <div class="sum-row"><span class="sum-lbl">누적 수익률</span><span class="sum-val" id="e-roi"></span></div>
+      <div class="sum-row"><span class="sum-lbl">현금 잔액</span><span class="sum-val" id="e-cash"></span></div>
+      <p class="ant-msg" id="e-msg"></p>
+    </div>
+  </div>
+  <div class="sec colony-bar" style="padding:12px 14px">
+    <div class="stage-chips" id="e-stages"></div>
+    <div class="prog-wrap"><div class="prog-fill" id="e-prog" style="width:0%"></div></div>
+    <div class="prog-lbl" id="e-prog-lbl"></div>
+  </div>
+  <!-- 하단 고정바 -->
+  <div class="bot-bar">
+    <button style="background:none;border:1.5px solid var(--border);color:var(--sub);font-size:12px;font-weight:600;padding:8px 12px;border-radius:7px;cursor:pointer;white-space:nowrap" onclick="openShare()">📸 공유</button>
+    <button class="btn-main" style="flex:1;text-align:center" onclick="doSleep()">잠자기 →</button>
+  </div>
+</div>
+
+<!-- 엔딩 -->
+<div id="scr-ending" class="screen">
+  <div class="end-wrap">
+    <div class="end-icon" id="end-ico">🏰</div>
+    <div class="end-title" id="end-ttl"></div>
+    <p class="end-sub" id="end-sub"></p>
+    <button class="btn-full" style="max-width:280px;margin-bottom:10px" onclick="openShare()">📸 기록 공유</button>
+    <button class="btn-full" style="max-width:280px;background:var(--bg);color:var(--text);border:1.5px solid var(--border)" onclick="initGame()">다시 시작</button>
+  </div>
+</div>
+
+<!-- 도움말 팝업 (게임 중 ? 버튼 → 오버레이) -->
+<div id="popup-help" class="popup-bg" style="display:none">
+  <div class="popup-box" style="max-height:88vh;overflow-y:auto;padding:0;border-radius:14px">
+    <div style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;z-index:1">
+      <span style="font-weight:800;color:var(--colony);font-size:15px">🐜 게임 설명</span>
+      <button onclick="closeHelp()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--sub);line-height:1;padding:0 4px">✕</button>
+    </div>
+    <div style="padding:14px">
+      <!-- 하루 흐름 -->
+      <div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--sub);margin-bottom:8px">하루의 흐름</div>
+      <div style="background:var(--bg);border-radius:10px;overflow:hidden;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">
+          <span style="font-size:20px;width:24px;text-align:center">☀️</span>
+          <div style="flex:1"><div style="font-size:13px;font-weight:700">아침</div><div style="font-size:11px;color:var(--sub)">소문 확인 · 어젯밤 가격 반영</div></div>
+          <span style="font-size:11px;font-weight:700;background:#fed7d7;color:#9b2c2c;padding:2px 8px;border-radius:10px">판매</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">
+          <span style="font-size:20px;width:24px;text-align:center">🌤️</span>
+          <div style="flex:1"><div style="font-size:13px;font-weight:700">낮</div><div style="font-size:11px;color:var(--sub)">소문 보고 투자 결정</div></div>
+          <span style="font-size:11px;font-weight:700;background:#c6f6d5;color:#276749;padding:2px 8px;border-radius:10px">구입</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px">
+          <span style="font-size:20px;width:24px;text-align:center">🌙</span>
+          <div style="flex:1"><div style="font-size:13px;font-weight:700">저녁</div><div style="font-size:11px;color:var(--sub)">오늘 가격 변동 확인 · 잠자기</div></div>
+          <span style="font-size:11px;font-weight:700;background:#f3f0ff;color:var(--colony);padding:2px 8px;border-radius:10px">잠자기</span>
+        </div>
+      </div>
+      <!-- 소문 힌트 -->
+      <div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--sub);margin-bottom:8px">소문 힌트</div>
+      <div style="background:var(--bg);border-radius:10px;overflow:hidden;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border)"><span style="font-size:13px;color:var(--accent);width:48px;flex-shrink:0">★★★</span><div style="font-size:12px;color:var(--text)">거의 확실 — 믿고 구입해도 좋아요</div></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border)"><span style="font-size:13px;color:var(--accent);width:48px;flex-shrink:0">★★☆</span><div style="font-size:12px;color:var(--text)">루머일 수도 있어요 ⚠️</div></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border)"><span style="font-size:13px;color:var(--accent);width:48px;flex-shrink:0">★☆☆</span><div style="font-size:12px;color:var(--text)">반반이에요 — 불확실해요</div></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 14px"><span style="font-size:13px;color:var(--flat);width:48px;flex-shrink:0">없음</span><div style="font-size:12px;color:var(--text)">오늘은 조용한 날이에요</div></div>
+      </div>
+      <!-- 식량 -->
+      <div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--sub);margin-bottom:8px">식량 6종</div>
+      <div style="background:var(--bg);border-radius:10px;overflow:hidden;margin-bottom:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr">
+          <div style="padding:9px 12px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);display:flex;gap:7px;align-items:center"><span style="font-size:18px">🍬</span><div><div style="font-size:12px;font-weight:600">사탕</div><div style="font-size:10px;color:var(--sub)">중간 변동</div></div></div>
+          <div style="padding:9px 12px;border-bottom:1px solid var(--border);display:flex;gap:7px;align-items:center"><span style="font-size:18px">🍫</span><div><div style="font-size:12px;font-weight:600">초콜릿</div><div style="font-size:10px;color:#9b2c2c;font-weight:600">고위험 고수익</div></div></div>
+          <div style="padding:9px 12px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);display:flex;gap:7px;align-items:center"><span style="font-size:18px">🍚</span><div><div style="font-size:12px;font-weight:600">설탕</div><div style="font-size:10px;color:#276749;font-weight:600">안전 저수익</div></div></div>
+          <div style="padding:9px 12px;border-bottom:1px solid var(--border);display:flex;gap:7px;align-items:center"><span style="font-size:18px">🍯</span><div><div style="font-size:12px;font-weight:600">꿀</div><div style="font-size:10px;color:#92400e;font-weight:600">매일 배당금 💰</div></div></div>
+          <div style="padding:9px 12px;border-right:1px solid var(--border);display:flex;gap:7px;align-items:center"><span style="font-size:18px">🎂</span><div><div style="font-size:12px;font-weight:600">케이크</div><div style="font-size:10px;color:#9b2c2c;font-weight:600">파티 때 대박</div></div></div>
+          <div style="padding:9px 12px;display:flex;gap:7px;align-items:center"><span style="font-size:18px">🍡</span><div><div style="font-size:12px;font-weight:600">젤리</div><div style="font-size:10px;color:var(--sub)">유행 타면 폭등</div></div></div>
+        </div>
+        <div style="padding:9px 12px;background:#fffbeb;border-top:1px solid var(--border);font-size:11px;color:#92400e">💡 꿀을 보유하면 매일 아침 개당 100원씩 자동 배당</div>
+      </div>
+      <!-- 저장 안내 -->
+      <div style="background:#fffbeb;border:1.5px solid #f59e0b;border-radius:10px;padding:11px 14px;font-size:12px;color:#78350f">
+        ⚠️ <strong>프로토타입 안내</strong> — 새로고침하면 처음부터 시작됩니다.
+      </div>
+    </div>
+    <div style="padding:0 14px 14px">
+      <button class="btn-close-p" onclick="closeHelp()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 공유 팝업 -->
+<div id="popup-share" class="popup-bg" style="display:none">
+  <div class="popup-box">
+    <pre class="share-pre" id="share-txt"></pre>
+    <button class="btn-copy" onclick="copyShare()">📋 텍스트 복사</button>
+    <button class="btn-close-p" onclick="closeShare()">닫기</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════
+const FOODS = [
+  {id:'candy', name:'사탕',   emoji:'🍬', initPrice:1200, vol:0.15, tag:'중간 변동',       tagType:''},
+  {id:'choco', name:'초콜릿', emoji:'🍫', initPrice:4200, vol:0.25, tag:'고위험 고수익',   tagType:'danger'},
+  {id:'sugar', name:'설탕',   emoji:'🍚', initPrice: 800, vol:0.08, tag:'안전 저수익',     tagType:'safe'},
+  {id:'honey', name:'꿀',     emoji:'🍯', initPrice:3100, vol:0.05, tag:'매일 배당금 💰',  tagType:'special', dividend:100},
+  {id:'cake',  name:'케이크', emoji:'🎂', initPrice:8500, vol:0.40, tag:'파티 때 대박',    tagType:'danger'},
+  {id:'jelly', name:'젤리',   emoji:'🍡', initPrice:2300, vol:0.20, tag:'유행 타면 폭등', tagType:''},
+];
+
+const STAGES = [
+  {step:1, name:'혼자방',       emoji:'🏠', thr:0,    desc:'좁지만 내 방이야'},
+  {step:2, name:'식량 창고',     emoji:'📦', thr:0.5,  desc:'이제 식량을 쌓을 수 있어!'},
+  {step:3, name:'설탕 저장소',   emoji:'🍚', thr:1.5,  desc:'설탕 전용 방이 생겼어'},
+  {step:4, name:'초콜릿 금고',   emoji:'🍫', thr:3.0,  desc:'비싼 건 따로 보관해야지'},
+  {step:5, name:'꿀단지 도서관', emoji:'🍯', thr:5.0,  desc:'꿀 모으면서 책도 읽는 곳'},
+  {step:6, name:'여왕 없는 왕국',emoji:'🏰', thr:10.0, desc:'해냈어. 내 굴이야.'},
+];
+
+const RUMORS = [
+  {t:'오늘 504호에서 손자 생일파티래! 케이크 잔뜩 산댄다!',      af:['케이크'],         imp:28,  type:'pos', h:3, rel:true},
+  {t:'단지 인플루언서가 초콜릿 먹방 예고했대',                    af:['초콜릿'],         imp:22,  type:'pos', h:3, rel:true},
+  {t:'방학 시작! 애들 집에 있는 시간 늘어남',                     af:['사탕','젤리'],    imp:15,  type:'pos', h:3, rel:true},
+  {t:'303호 커플 기념일! 초콜릿 케이크 주문했다는 소문',           af:['초콜릿','케이크'],imp:20,  type:'pos', h:3, rel:true},
+  {t:'꿀이 건강에 좋다는 기사 퍼지는 중',                         af:['꿀'],             imp:12,  type:'pos', h:3, rel:true},
+  {t:'학교 체육대회 날. 아이들이 간식 대량 구매한대',              af:['사탕','젤리'],    imp:15,  type:'pos', h:3, rel:true},
+  {t:'새벽 베이킹 유행이 단지까지 번졌어. 설탕 재료 쓸어간다는 말이',af:['설탕','케이크'],imp:15, type:'pos', h:3, rel:true},
+  {t:'202호에서 홈파티 준비 중. 케이크 재료 왕창 산다고',          af:['케이크','설탕'],  imp:18,  type:'pos', h:3, rel:true},
+  {t:'발렌타인 앞두고 단지 커플들이 초콜릿 대량 구매 중',          af:['초콜릿'],         imp:35,  type:'pos', h:3, rel:true},
+  {t:'단지 전체 다이어트 챌린지 시작. 설탕이랑 사탕 안 산댄다',    af:['설탕','사탕'],   imp:-18, type:'neg', h:3, rel:true},
+  {t:'편의점 대규모 세일 시작. 집에서 직접 안 살 것 같아',         af:['사탕','젤리'],   imp:-12, type:'neg', h:3, rel:true},
+  {t:'요즘 무설탕 캔디 유행. 일반 사탕은 안 산댄다',               af:['사탕'],          imp:-22, type:'neg', h:3, rel:true},
+  {t:'뉴스에서 설탕 과다 섭취 위험성 집중 보도했대',               af:['설탕'],          imp:-20, type:'neg', h:3, rel:true},
+  {t:'요즘 젤리에 이상한 성분 들어있다는 기사 퍼졌어',             af:['젤리'],          imp:-25, type:'neg', h:3, rel:true},
+  {t:'관리사무소에서 해충 방제 공지 올라왔어. 식량 조심해야 해',    af:['설탕','꿀'],     imp:-15, type:'neg', h:3, rel:true},
+  {t:'202호에 이사 온 새 가족. 취향을 아직 모르겠어',              af:[],                 imp:0,   type:'mix', h:1, rel:false},
+  {t:'날씨가 갑자기 더워졌어. 뭐가 잘 팔릴지...',                 af:['젤리'],           imp:8,   type:'mix', h:1, rel:false},
+  {t:'오늘 동네 마트 휴무래',                                      af:['설탕','사탕'],   imp:-8,  type:'mix', h:1, rel:false},
+  {t:'젤리 가격 폭등한다는 소문 돌고 있어! ⚠️ 루머일 수도',        af:['젤리'],          imp:-10, type:'rum', h:2, rel:false},
+  {t:'초콜릿 대란 온다고 하던데... ⚠️ 루머일 수도',               af:['초콜릿'],        imp:-15, type:'rum', h:2, rel:false},
+  {t:'오늘은 조용한 하루인 것 같아...',                            af:[],                 imp:0,   type:'bnd', h:0, rel:false},
+  {t:'특별한 소문은 없어. 그냥 평범한 하루려나',                   af:[],                 imp:0,   type:'bnd', h:0, rel:false},
+  {t:'바람이 많이 불어서 그런가, 소문이 잘 안 들려',               af:[],                 imp:0,   type:'bnd', h:0, rel:false},
+];
+
+const MSGS = {
+  big:    ['케이크 값이 어마어마하게 올랐어! 굴 확장이 가까워졌어!','대박이야!! 이 기세면 금방이야!','와... 대박 났어. 열심히 들을 걸 진즉에 알았어야!'],
+  small:  ['오늘 조금 벌었어. 꾸준히 가자!','나쁘지 않아. 계속 이렇게 하면 돼.','작지만 확실한 수익이야.'],
+  loss:   ['소문이 틀렸어... 다음엔 더 꼼꼼히 봐야겠어.','아... 손해봤어. 하지만 아직 괜찮아.','이런 날도 있는 거야. 내일은 더 좋은 소문이 오겠지.'],
+  neutral:['오늘은 그럭저럭이었어. 내일은 더 좋은 소문이 오겠지.','별 변화 없는 하루였어.','꿀 배당이라도 있어서 다행이야.'],
+};
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let g = {};
+let selId = null;
+let sellQ = 1;
+let buyQ = 1;
+let noonRumorOpen = false;
+
+function initGame() {
+  const prices = {}, hist = {}, port = {};
+  FOODS.forEach(f => { prices[f.id] = f.initPrice; hist[f.id] = [f.initPrice]; port[f.id] = 0; });
+  port['candy'] = 10;
+  g = {
+    day: 1,
+    cash: 15000,
+    startAsset: 15000 + 10 * 1200, // 27000
+    prices, hist, port,
+    rumors: [],
+    nightRes: [],   // 어젯밤 계산된 가격 변동 (다음 아침 공개)
+    divToday: 0,
+    colStep: 1,
+  };
+  selId = null; sellQ = 1; buyQ = 1;
+  startMorning();
+}
+
+// ═══════════════════════════════════════
+// CORE LOGIC
+// ═══════════════════════════════════════
+function total() {
+  return Math.round(g.cash + FOODS.reduce((s, f) => s + (g.port[f.id]||0) * g.prices[f.id], 0));
+}
+function roi() { return (total() - g.startAsset) / g.startAsset; }
+
+function curStage() {
+  for (let i = STAGES.length - 1; i >= 0; i--)
+    if (roi() >= STAGES[i].thr) return STAGES[i];
+  return STAGES[0];
+}
+function nextStage() {
+  const c = curStage();
+  return STAGES.find(s => s.step === c.step + 1) || null;
+}
+function stageProgress() {
+  const c = curStage(), nx = nextStage();
+  if (!nx) return 100;
+  const r = roi(), range = nx.thr - c.thr;
+  return Math.min(100, Math.max(0, Math.round((r - c.thr) / range * 100)));
+}
+
+function pickRumors() {
+  const used = new Set();
+  const pool = [...RUMORS].sort(() => Math.random() - 0.5);
+  const cnt = Math.random() < 0.25 ? 1 : Math.random() < 0.6 ? 2 : 3;
+  const out = [];
+  for (const r of pool) {
+    if (out.length >= cnt) break;
+    if (r.af.length > 0 && r.af.some(f => used.has(f))) continue;
+    out.push(r);
+    r.af.forEach(f => used.add(f));
+  }
+  return out;
+}
+
+function calcNight() {
+  return FOODS.map(f => {
+    const old = g.prices[f.id];
+    const rum = g.rumors.find(r => r.af.includes(f.name));
+    const ne = rum ? rum.imp / 100 : 0;
+    const noise = (Math.random() - 0.5) * f.vol;
+    let np = old * (1 + ne + noise);
+    np = Math.max(old * 0.5, Math.min(old * 1.5, np)); // ±50% cap
+    np = Math.max(np, f.initPrice * 0.2);               // floor
+    np = Math.round(np);
+    return {id: f.id, name: f.name, emoji: f.emoji, old, np, pct: Math.round((np - old) / old * 100)};
+  });
+}
+
+function applyDiv() {
+  const q = g.port['honey'] || 0;
+  g.divToday = q * 100;
+  g.cash += g.divToday;
+}
+
+// ═══════════════════════════════════════
+// INTRO & FLOW
+// ═══════════════════════════════════════
+function goIntro() { show('scr-intro'); }
+function startNewGame() { initGame(); }
+function openHelp() { $('popup-help').style.display = 'flex'; }
+function closeHelp() { $('popup-help').style.display = 'none'; }
+function startMorning() {
+  // 가격은 doSleep()에서 이미 반영됨 — 아침에는 적용 없음
+  applyDiv();
+  g.rumors = pickRumors();
+  g.colStep = curStage().step;
+
+  // 파산 / 클리어 체크
+  if (total() <= 2000) { renderEnd('bankrupt'); return; }
+  if (g.colStep >= 6)  { renderEnd('clear');    return; }
+
+  selId = null; sellQ = 1;
+  renderMorning();
+  show('scr-morning');
+}
+
+function goNoon() { selId = null; buyQ = 1; noonRumorOpen = false; renderNoon(); show('scr-noon'); }
+
+function goEvening() {
+  g.nightRes = calcNight(); // 저녁에 미리 계산 → 이 화면에서 공개
+  renderEvening();
+  show('scr-evening');
+}
+
+function doSleep() {
+  // 저녁에 계산된 가격 적용
+  g.nightRes.forEach(r => {
+    g.prices[r.id] = r.np;
+    g.hist[r.id].push(r.np);
+    if (g.hist[r.id].length > 7) g.hist[r.id].shift();
+  });
+  g.nightRes = [];
+  g.day++;
+  startMorning();
+}
+
+// ═══════════════════════════════════════
+// TRADING
+// ═══════════════════════════════════════
+function doSell() { /* 인라인 버튼으로 대체됨 */ }
+
+function doBuy() {
+  if (!selId) return;
+  const f = FOODS.find(x => x.id === selId);
+  const cost = buyQ * g.prices[f.id];
+  if (cost > g.cash) return toast('현금이 부족해!');
+  g.cash -= cost;
+  g.port[f.id] = (g.port[f.id] || 0) + buyQ;
+  toast(`${f.emoji} ${f.name} ${buyQ}개 구입!`);
+  selId = null;
+  renderNoonFoods();
+}
+
+// 수량 조절 (매수 전용)
+function setBuyQty(t) {
+  if (!selId) return;
+  const f = FOODS.find(x => x.id === selId);
+  const mx = Math.floor(g.cash / g.prices[f.id]);
+  if (t === 'max') buyQ = Math.max(1, mx);
+  else if (t === 'half') buyQ = Math.max(1, Math.floor(mx / 2));
+  else buyQ = 1;
+  renderNoonFoods();
+}
+function adjBuyQty(d) {
+  if (!selId) return;
+  const f = FOODS.find(x => x.id === selId);
+  const mx = Math.max(1, Math.floor(g.cash / g.prices[f.id]));
+  buyQ = Math.max(1, Math.min(mx, buyQ + d));
+  renderNoonFoods();
+}
+
+// ═══════════════════════════════════════
+// RENDER: MORNING
+// ═══════════════════════════════════════
+function renderMorning() {
+  const st = curStage();
+  $('m-day').textContent = `🐜 DAY ${g.day}`;
+  $('m-col').textContent = `${st.emoji} ${st.name}`;
+  $('m-asset').textContent = fmt(total());
+  $('m-cash').textContent = fmt(g.cash);
+  $('m-welcome').style.display = g.day === 1 ? '' : 'none';
+
+  // 배당
+  const dv = $('m-div');
+  if (g.divToday > 0) { dv.style.display = ''; dv.textContent = `🍯 꿀 배당금 +${fmt(g.divToday)} 입금됐어!`; }
+  else dv.style.display = 'none';
+
+  // (어젯밤 소식은 저녁 화면으로 이동됨 — 아침에서는 생략)
+
+  // 소문
+  $('m-rum-list').innerHTML = rumorHtml(g.rumors);
+
+  // 포트폴리오 (매도 가능 식량 — 인라인 버튼)
+  const holding = FOODS.filter(f => (g.port[f.id] || 0) > 0);
+  $('m-port-list').innerHTML = holding.length === 0
+    ? '<div class="empty-msg">가진 식량이 없어. 낮 거래소에서 사자!</div>'
+    : holding.map(f => {
+        const q = g.port[f.id];
+        const pr = g.prices[f.id];
+        const total = q * pr;
+        return `<div class="pfi">
+          <div class="pfi-top">
+            <span style="font-size:22px;flex-shrink:0">${f.emoji}</span>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600">${f.name}</div>
+              <div class="food-own">보유 ${q}개 &nbsp;·&nbsp; 개당 ${fmt(pr)}</div>
+            </div>
+            <div class="pfi-val">
+              <div class="pfi-val-main">${fmt(total)}</div>
+              <div class="pfi-val-sub">평가액</div>
+            </div>
+          </div>
+          <div class="pfi-btns">
+            <button class="btn-sell-one" onclick="sellOne('${f.id}')">1개 판매</button>
+            <button class="btn-sell-all" onclick="sellAll('${f.id}')">전량 판매 ${fmt(total)}</button>
+          </div>
+        </div>`;
+      }).join('');
+}
+
+function sellOne(id) {
+  const f = FOODS.find(x => x.id === id);
+  if ((g.port[id]||0) < 1) return;
+  g.cash += g.prices[id];
+  g.port[id]--;
+  toast(`${f.emoji} ${f.name} 1개 판매!`);
+  renderMorning();
+}
+function sellAll(id) {
+  const f = FOODS.find(x => x.id === id);
+  const q = g.port[id] || 0;
+  if (q < 1) return;
+  g.cash += q * g.prices[id];
+  g.port[id] = 0;
+  toast(`${f.emoji} ${f.name} ${q}개 전량 판매!`);
+  renderMorning();
+}
+
+// ═══════════════════════════════════════
+// RENDER: NOON
+// ═══════════════════════════════════════
+function renderNoon() {
+  const st = curStage();
+  $('n-day').textContent = `🌤️ DAY ${g.day}`;
+  $('n-col').textContent = `${st.emoji} ${st.name}`;
+  $('n-asset').textContent = fmt(total());
+  $('n-cash').textContent = fmt(g.cash);
+  renderNoonRumors();
+  renderNoonFoods();
+}
+
+function renderNoonRumors() {
+  const tog = $('n-rum-toggle');
+  if (noonRumorOpen) {
+    $('n-rum-list').innerHTML = rumorHtml(g.rumors);
+    if (tog) tog.textContent = '접기 ▲';
+  } else {
+    const badges = g.rumors.map(r =>
+      r.af.map(fn => { const fd = FOODS.find(x=>x.name===fn); return fd ? fd.emoji : ''; }).join('')
+    ).filter(Boolean).join('  ');
+    $('n-rum-list').innerHTML = `<div style="padding:8px 14px;font-size:13px;color:var(--sub)">${badges || '오늘은 조용한 하루예요'}</div>`;
+    if (tog) tog.textContent = '더 보기 ▼';
+  }
+}
+
+function toggleNoonRumors() {
+  noonRumorOpen = !noonRumorOpen;
+  renderNoonRumors();
+}
+
+function renderNoonFoods() {
+  const affected = new Set();
+  g.rumors.forEach(r => r.af.forEach(f => affected.add(f)));
+
+  $('n-food-list').innerHTML = FOODS.map(f => {
+    const own = g.port[f.id] || 0;
+    const h = g.hist[f.id];
+    const prev = h.length > 1 ? h[h.length-2] : f.initPrice;
+    const pct = Math.round((g.prices[f.id]-prev)/prev*100);
+    const pcls = pct>0?'up':pct<0?'down':'flat';
+    const arr = pct>0?'▲':pct<0?'▼':'－';
+    const isOpen = selId === f.id;
+    const isHot = affected.has(f.name);
+
+    const expandHtml = isOpen ? `
+      <div class="food-buy-inline" onclick="event.stopPropagation()">
+        <div class="fbi-controls">
+          <button class="btn-sm" onclick="setBuyQty('max')">최대</button>
+          <button class="btn-sm" onclick="setBuyQty('half')">절반</button>
+          <button class="btn-sm" onclick="setBuyQty(1)">1개</button>
+          <button class="btn-cir" onclick="adjBuyQty(-1)">－</button>
+          <span class="qty-num">${buyQ}</span>
+          <button class="btn-cir" onclick="adjBuyQty(1)">＋</button>
+        </div>
+        <div class="fbi-cost">구입 금액: ${fmt(buyQ * g.prices[f.id])}</div>
+        <button class="btn-trade btn-buy-c" style="width:100%" ${buyQ*g.prices[f.id]>g.cash?'disabled':''} onclick="doBuy()">구입</button>
+      </div>` : '';
+
+    return `<div>
+      <div class="food-row ${isOpen?'sel':''} ${isHot?'hot':''}" onclick="toggleBuyRow('${f.id}')">
+        <span class="food-em">${f.emoji}</span>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span class="food-nm">${f.name}</span>
+            <span class="food-tag ${f.tagType}">${f.tag}</span>
+            ${isHot ? '<span class="rumor-dot"></span>' : ''}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:3px">
+            <span class="food-pr">${fmt(g.prices[f.id])}</span>
+            <span class="food-chg ${pcls}">${arr}${Math.abs(pct)}%</span>
+            <span class="food-own">보유 ${own}개</span>
+          </div>
+        </div>
+        <span style="font-size:11px;color:${isOpen?'var(--colony)':'var(--flat)'};flex-shrink:0">${isOpen?'▲':'▼'}</span>
+      </div>
+      ${expandHtml}
+    </div>`;
+  }).join('');
+
+  $('n-cash').textContent = fmt(g.cash);
+}
+
+function toggleBuyRow(foodId) {
+  selId = selId === foodId ? null : foodId;
+  if (selId) buyQ = 1;
+  renderNoonFoods();
+}
+function selBuy(id) { toggleBuyRow(id); }
+function updBuyPanel() { /* 인라인 방식으로 대체됨 */ }
+
+// ═══════════════════════════════════════
+// RENDER: EVENING
+// ═══════════════════════════════════════
+function renderEvening() {
+  const st = curStage(), r = roi(), rpct = Math.round(r * 100);
+  $('e-day').textContent = `🌙 DAY ${g.day}`;
+  $('e-top-asset').textContent = fmt(total());
+  $('e-col').textContent = `${st.emoji} ${st.name}`;
+
+  // 오늘 가격 변동 (저녁에 공개)
+  const chgEl = $('e-chg-list');
+  if (g.nightRes.length > 0) {
+    $('e-chg-sec').style.display = '';
+    chgEl.innerHTML = g.nightRes.map(r => {
+      const pcls = r.pct > 0 ? 'up' : r.pct < 0 ? 'down' : 'flat';
+      const arr = r.pct > 0 ? '▲' : r.pct < 0 ? '▼' : '－';
+      return `<div class="chg-row">
+        <span class="chg-em">${r.emoji}</span>
+        <span class="chg-nm">${r.name}</span>
+        <span class="chg-pr">${fmt(r.old)} → ${fmt(r.np)}</span>
+        <span class="chg-pct ${pcls}">${arr}${Math.abs(r.pct)}%</span>
+      </div>`;
+    }).join('');
+  } else {
+    $('e-chg-sec').style.display = 'none';
+  }
+
+  $('e-total').textContent = fmt(total());
+  const ri = $('e-roi');
+  ri.textContent = `${rpct >= 0 ? '+' : ''}${rpct}%`;
+  ri.className = `sum-val ${rpct >= 0 ? 'up' : 'down'}`;
+  $('e-cash').textContent = fmt(g.cash);
+  $('e-bar-asset').textContent = fmt(total());
+
+  let pool;
+  if (rpct >= 20) pool = MSGS.big;
+  else if (rpct > 0) pool = MSGS.small;
+  else if (rpct < 0) pool = MSGS.loss;
+  else pool = MSGS.neutral;
+  $('e-msg').textContent = '🐜 ' + pool[Math.floor(Math.random() * pool.length)];
+
+  renderColonyBar('e');
+}
+
+// ═══════════════════════════════════════
+// RENDER: COLONY BAR
+// ═══════════════════════════════════════
+function renderColonyBar(pfx) {
+  const st = curStage(), nx = nextStage(), prog = stageProgress();
+  $(pfx + '-stages').innerHTML = STAGES.map(s => {
+    const cls = s.step <= st.step ? 'chip-done' : s.step === st.step + 1 ? 'chip-next' : 'chip-lock';
+    return `<span class="${cls}">${s.emoji} ${s.name}</span>`;
+  }).join('');
+  $(pfx + '-prog').style.width = prog + '%';
+  const lbl = nx
+    ? `다음 확장: ${nx.emoji} ${nx.name} · 목표 ${fmt(Math.round(g.startAsset * (1 + nx.thr)))} (${prog}%)`
+    : '🏆 최종 단계 완성!';
+  $(pfx + '-prog-lbl').textContent = lbl;
+}
+
+// ═══════════════════════════════════════
+// RENDER: ENDING
+// ═══════════════════════════════════════
+function renderEnd(type) {
+  const r = Math.round(roi() * 100);
+  if (type === 'clear') {
+    $('end-ico').textContent = '🏰';
+    $('end-ttl').textContent = '여왕 없는 왕국 완성!';
+    $('end-sub').textContent = `DAY ${g.day} · 최종 자산 ${fmt(total())}\n누적 수익률 +${r}%\n\n"해냈어. 내 굴이야."`;
+  } else {
+    $('end-ico').textContent = '💀';
+    $('end-ttl').textContent = '파산...';
+    $('end-sub').textContent = `DAY ${g.day} · 최종 자산 ${fmt(total())}\n\n"굴 지을 식량이 다 떨어졌어...\n다음엔 소문을 더 꼼꼼히 들어야겠어."`;
+  }
+  show('scr-ending');
+}
+
+// ═══════════════════════════════════════
+// SHARE
+// ═══════════════════════════════════════
+function grade() {
+  const r = roi(), d = g.day, s = g.colStep;
+  if (s >= 6) return {e:'🌟', n:'전설의 개미'};
+  if (d >= 60 && r >= 5) return {e:'🏰', n:'굴주인'};
+  if (d >= 30 && r >= 3) return {e:'👑', n:'선임 개미'};
+  if (d >= 15 && r >= 1) return {e:'🐜🐜', n:'숙련 개미'};
+  if (d >= 8)  return {e:'🐜', n:'일개미'};
+  if (d >= 4)  return {e:'🐛', n:'애벌레'};
+  return {e:'🥚', n:'알'};
+}
+
+function openShare() {
+  const r = Math.round(roi() * 100), st = curStage(), gr = grade();
+  const txt = [
+    '🐜 개미의 꿈',
+    '',
+    `DAY ${g.day} | 굴 자산 ${r >= 0 ? '+' : ''}${r}%`,
+    `현재 굴: ${st.emoji} ${st.name}`,
+    `등급: ${gr.e} ${gr.n}`,
+    '',
+    `#개미의꿈 #DAY${g.day} #개미투자`,
+  ].join('\n');
+  $('share-txt').textContent = txt;
+  $('popup-share').style.display = 'flex';
+}
+function closeShare() { $('popup-share').style.display = 'none'; }
+function copyShare() {
+  navigator.clipboard.writeText($('share-txt').textContent)
+    .then(() => toast('📋 복사됐어!'));
+  closeShare();
+}
+
+// ═══════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+function $(id) { return document.getElementById(id); }
+function fmt(n) { return '₩' + Math.round(n).toLocaleString('ko-KR'); }
+
+function rumorHtml(rumors) {
+  const bdg = {pos:'pos',neg:'neg',mix:'mix',rum:'rum',bnd:'blind'};
+  const lbl = {pos:'호재',neg:'악재',mix:'불명',rum:'루머',bnd:'조용'};
+  const star = n => '★'.repeat(n) + '☆'.repeat(3 - n);
+  return rumors.map(r => `
+    <div class="rumor-row">
+      <div class="rumor-txt">${r.t}</div>
+      ${r.h > 0 ? `<span class="rumor-hint">${star(r.h)}</span>` : ''}
+      <span class="rumor-bdg bdg-${bdg[r.type]}">${lbl[r.type]}</span>
+    </div>`).join('');
+}
+
+let _toastT = null;
+function toast(msg) {
+  const el = $('toast'); el.textContent = msg; el.classList.add('show');
+  if (_toastT) clearTimeout(_toastT);
+  _toastT = setTimeout(() => el.classList.remove('show'), 2000);
+}
+</script>
+</body>
+</html>
